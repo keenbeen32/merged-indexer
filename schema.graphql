@@ -1,0 +1,1351 @@
+
+
+type Farm_EternalFarming {
+  id: ID!
+  rewardToken: Bytes!
+  bonusRewardToken: Bytes!
+  virtualPool: Bytes!
+  pool: Bytes!
+  nonce: BigInt! @config(precision: 78)
+  reward: BigInt! @config(precision: 78)
+  bonusReward: BigInt! @config(precision: 78)
+  rewardRate: BigInt! @config(precision: 78)
+  bonusRewardRate: BigInt! @config(precision: 78)
+  isDeactivated: Boolean
+  minRangeLength: BigInt!
+}
+
+type Farm_Deposit {
+  id: ID!
+  owner: Bytes!
+  pool: Bytes!
+  eternalFarming: Bytes
+  liquidity: BigInt!
+}
+
+type Farm_Reward {
+  id: ID!
+  rewardAddress: Bytes!
+  amount: BigInt! @config(precision: 78)
+  owner: Bytes!
+}
+
+type Analytics_Factory @entity(immutable: false) {
+  id: ID!
+  poolCount: BigInt!
+  txCount: BigInt!
+  totalVolumeUSD: BigDecimal!
+  totalVolumeMatic: BigDecimal!
+  totalFeesUSD: BigDecimal!
+  totalFeesMatic: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  totalValueLockedUSD: BigDecimal!
+  defaultCommunityFee: BigInt!
+  totalValueLockedMatic: BigDecimal!
+  totalValueLockedUSDUntracked: BigDecimal!
+  totalValueLockedMaticUntracked: BigDecimal!
+  owner: ID!
+}
+
+type Analytics_Bundle @entity(immutable: false) {
+  id: ID!
+  maticPriceUSD: BigDecimal!
+}
+
+type Analytics_Token @entity(immutable: false) {
+  id: ID!
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+  totalSupply: BigInt!
+  volume: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  txCount: BigInt!
+  poolCount: BigInt!
+  totalValueLocked: BigDecimal!
+  totalValueLockedUSD: BigDecimal!
+  totalValueLockedUSDUntracked: BigDecimal!
+  derivedMatic: BigDecimal!
+  whitelistPools: [String!]!
+  tokenDayData: [Analytics_TokenDayData!]! @derivedFrom(field: "token")
+}
+
+type Analytics_Pool @entity(immutable: false) {
+  id: ID!
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+  token0: Analytics_Token!
+  token1: Analytics_Token!
+  deployer: Bytes!
+  plugin: Bytes!
+  pluginConfig: Int!
+  fee: BigInt!
+  communityFee: BigInt!
+  liquidity: BigInt!
+  sqrtPrice: BigInt!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  tick: BigInt!
+  observationIndex: BigInt!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  tickSpacing: BigInt!
+  untrackedFeesUSD: BigDecimal!
+  txCount: BigInt!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  collectedFeesUSD: BigDecimal!
+  lastMintIndex: BigInt! 
+  totalValueLockedToken0: BigDecimal!
+  totalValueLockedToken1: BigDecimal!
+  feesToken0: BigDecimal!
+  feesToken1: BigDecimal!
+  totalValueLockedMatic: BigDecimal!
+  totalValueLockedUSD: BigDecimal!
+  totalValueLockedUSDUntracked: BigDecimal!
+  liquidityProviderCount: BigInt! # used to detect new exchanges
+  poolHourData: [Analytics_PoolHourData!]! @derivedFrom(field: "pool")
+  poolDayData: [Analytics_PoolDayData!]! @derivedFrom(field: "pool")
+  mints: [Analytics_Mint!]! @derivedFrom(field: "pool")
+  burns: [Analytics_Burn!]! @derivedFrom(field: "pool")
+  swaps: [Analytics_Swap!]! @derivedFrom(field: "pool")
+  collects: [Analytics_Collect!]! @derivedFrom(field: "pool")
+  ticks: [Analytics_Tick!]! @derivedFrom(field: "pool")
+}
+
+type Analytics_Tick @entity(immutable: false) {
+  id: ID!
+  poolAddress: String
+  tickIdx: BigInt!
+  pool: Analytics_Pool!
+  liquidityGross: BigInt!
+  liquidityNet: BigInt!
+  price0: BigDecimal!
+  price1: BigDecimal!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  collectedFeesUSD: BigDecimal!
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+  liquidityProviderCount: BigInt! # used to detect new exchanges
+}
+
+type Analytics_PoolPosition @entity(immutable: false) {
+  id: ID!
+  pool: Analytics_Pool!
+  lowerTick: Analytics_Tick!
+  upperTick: Analytics_Tick!
+  owner: Bytes!
+  liquidity: BigInt!
+}
+
+type Analytics_Position @entity(immutable: false) {
+  id: ID!
+  owner: Bytes!
+  pool: Analytics_Pool!
+  token0: Analytics_Token!
+  token1: Analytics_Token!
+  tickLower: Analytics_Tick!
+  tickUpper: Analytics_Tick!
+  liquidity: BigInt!
+  depositedToken0: BigDecimal!
+  depositedToken1: BigDecimal!
+  withdrawnToken0: BigDecimal!
+  withdrawnToken1: BigDecimal!
+  collectedToken0: BigDecimal!
+  collectedToken1: BigDecimal!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  transaction: Analytics_Transaction!
+}
+
+type Analytics_PositionSnapshot @entity(immutable: true){
+  id: ID!
+  owner: Bytes!
+  pool: Analytics_Pool!
+  position: Analytics_Position!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  liquidity: BigInt!
+  depositedToken0: BigDecimal!
+  depositedToken1: BigDecimal!
+  withdrawnToken0: BigDecimal!
+  withdrawnToken1: BigDecimal!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  transaction: Analytics_Transaction!
+}
+
+type Analytics_Transaction @entity(immutable: false) {
+  id: ID!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  gasLimit: BigInt!
+  gasPrice: BigInt!
+  index: BigInt!
+  mints: [Analytics_Mint!]! @derivedFrom(field: "transaction")
+  burns: [Analytics_Burn!]! @derivedFrom(field: "transaction")
+  swaps: [Analytics_Swap!]! @derivedFrom(field: "transaction")
+  flashed: [Analytics_Flash!]! @derivedFrom(field: "transaction")
+  collects: [Analytics_Collect!]! @derivedFrom(field: "transaction")
+}
+
+type Analytics_Mint @entity(immutable: true) {
+  id: ID!
+  transaction: Analytics_Transaction!
+  timestamp: BigInt!
+  pool: Analytics_Pool!
+  token0: Analytics_Token!
+  token1: Analytics_Token!
+  owner: Bytes!
+  sender: Bytes
+  origin: Bytes! # the EOA that initiated the txn
+  amount: BigInt!
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  amountUSD: BigDecimal
+  tickLower: BigInt!
+  tickUpper: BigInt!
+  reserves0: BigDecimal!
+  reserves1: BigDecimal!
+  logIndex: BigInt
+}
+
+type Analytics_Burn @entity(immutable: true) {
+  id: ID!
+  transaction: Analytics_Transaction!
+  pool: Analytics_Pool!
+  token0: Analytics_Token!
+  token1: Analytics_Token!
+  timestamp: BigInt!
+  owner: Bytes
+  origin: Bytes! # the EOA that initiated the txn
+  amount: BigInt!
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  amountUSD: BigDecimal
+  tickLower: BigInt!
+  tickUpper: BigInt!
+  reserves0: BigDecimal!
+  reserves1: BigDecimal!
+  logIndex: BigInt
+}
+
+type Analytics_Swap @entity(immutable: true) {
+  id: ID!
+  transaction: Analytics_Transaction!
+  timestamp: BigInt!
+  pool: Analytics_Pool!
+  token0: Analytics_Token!
+  token1: Analytics_Token!
+  sender: Bytes!
+  recipient: Bytes!
+  liquidity: BigInt!
+  origin: Bytes! # the EOA that initiated the txn
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  amountUSD: BigDecimal!
+  price: BigInt!
+  tick: BigInt!
+  reserves0: BigDecimal!
+  reserves1: BigDecimal!
+  logIndex: BigInt
+}
+
+type Analytics_Collect @entity(immutable: true) {
+  id: ID!
+  transaction: Analytics_Transaction!
+  timestamp: BigInt!
+  pool: Analytics_Pool!
+  owner: Bytes
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  amountUSD: BigDecimal
+  tickLower: BigInt!
+  tickUpper: BigInt!
+  logIndex: BigInt
+}
+
+type Analytics_Flash @entity(immutable: true) {
+  id: ID!
+  transaction: Analytics_Transaction!
+  timestamp: BigInt!
+  pool: Analytics_Pool!
+  sender: Bytes!
+  recipient: Bytes!
+  amount0: BigDecimal!
+  amount1: BigDecimal!
+  amountUSD: BigDecimal!
+  amount0Paid: BigDecimal!
+  amount1Paid: BigDecimal!
+  logIndex: BigInt
+}
+
+type Analytics_AlgebraDayData @entity(immutable: false) {
+  id: ID!
+  date: Int!
+  volumeMatic: BigDecimal!
+  volumeUSD: BigDecimal!
+  volumeUSDUntracked: BigDecimal!
+  feesUSD: BigDecimal!
+  txCount: BigInt!
+  tvlUSD: BigDecimal!
+}
+
+type Analytics_AlgebraHourData @entity(immutable: false) {
+  id: ID!
+  date: Int!
+  volumeMatic: BigDecimal!
+  volumeUSD: BigDecimal!
+  volumeUSDUntracked: BigDecimal!
+  feesUSD: BigDecimal!
+  txCount: BigInt!
+  tvlUSD: BigDecimal!
+}
+
+type Analytics_PoolDayData @entity(immutable: false) {
+  id: ID!
+  date: Int!
+  pool: Analytics_Pool!
+  liquidity: BigInt!
+  sqrtPrice: BigInt!
+  untrackedVolumeUSD: BigDecimal!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  tick: BigInt
+  tvlUSD: BigDecimal!
+  feesToken0: BigDecimal!
+  feesToken1: BigDecimal!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  txCount: BigInt!
+  open: BigDecimal!
+  high: BigDecimal!
+  low: BigDecimal!
+  close: BigDecimal!
+}
+
+type Analytics_PoolFeeData @entity(immutable: false){
+  id: ID!
+  pool: String
+  timestamp: BigInt!
+  fee: BigInt!
+}
+
+type Analytics_SwapFeeCache @entity(immutable: false) {
+  id: ID!
+  overrideFee: BigInt!
+  pluginFee: BigInt!
+}
+
+type Analytics_BurnFeeCache @entity(immutable: false) {
+  id: ID!
+  pluginFee: BigInt!
+}
+
+type Analytics_PositionTransferCache @entity(immutable: false) {
+  id: ID!
+  owner: Bytes!
+}
+
+type Analytics_PoolHourData @entity(immutable: false) {
+  id: ID!
+  periodStartUnix: Int!
+  pool: Analytics_Pool!
+  liquidity: BigInt!
+  sqrtPrice: BigInt!
+  token0Price: BigDecimal!
+  token1Price: BigDecimal!
+  tick: BigInt
+  tvlUSD: BigDecimal!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  txCount: BigInt!
+  open: BigDecimal!
+  high: BigDecimal!
+  low: BigDecimal!
+  close: BigDecimal!
+}
+
+type Analytics_TickHourData @entity(immutable: false) {
+  id: ID!
+  periodStartUnix: Int!
+  pool: Analytics_Pool!
+  tick: Analytics_Tick!
+  liquidityGross: BigInt!
+  liquidityNet: BigInt!
+  volumeToken0: BigDecimal!
+  volumeToken1: BigDecimal!
+  volumeUSD: BigDecimal!
+  feesUSD: BigDecimal!
+}
+
+type Analytics_TokenDayData @entity(immutable: false) {
+  id: ID!
+  date: Int!
+  token: Analytics_Token!
+  volume: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  totalValueLocked: BigDecimal!
+  totalValueLockedUSD: BigDecimal!
+  priceUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  open: BigDecimal!
+  high: BigDecimal!
+  low: BigDecimal!
+  close: BigDecimal!
+}
+
+type Analytics_TokenHourData @entity(immutable: false) {
+  id: ID!
+  periodStartUnix: Int!
+  token: Analytics_Token!
+  volume: BigDecimal!
+  volumeUSD: BigDecimal!
+  untrackedVolumeUSD: BigDecimal!
+  totalValueLocked: BigDecimal!
+  totalValueLockedUSD: BigDecimal!
+  priceUSD: BigDecimal!
+  feesUSD: BigDecimal!
+  open: BigDecimal!
+  high: BigDecimal!
+  low: BigDecimal!
+  close: BigDecimal!
+}
+
+type Analytics_Plugin @entity(immutable: false) {
+  id: ID!
+  pool: Analytics_Pool!
+  collectedFeesToken0: BigDecimal!
+  collectedFeesToken1: BigDecimal!
+  collectedFeesUSD: BigDecimal!
+}
+
+type Analytics_FeeHourData @entity(immutable: false) {
+  id: ID!
+  pool: String!
+  fee: BigInt!
+  changesCount: BigInt!
+  timestamp: BigInt!
+  minFee: BigInt!
+  maxFee: BigInt!
+  startFee: BigInt!
+  endFee: BigInt! 
+}
+
+type Helper_GaugeCreated {
+  id: ID!
+  gauge: Bytes!
+  creator: Bytes!
+  internalBribe: Bytes!
+  externalBribe: Bytes!
+  pool: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_Token {
+  id: ID!
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+  totalSupply: BigInt! @config(precision: 78)
+}
+
+type Helper_Gauge {
+  id: ID!
+  state: Helper_GaugeState @index
+  gauge: Bytes!
+  creator: Bytes!
+  internalBribe: Bytes!
+  externalBribe: Bytes!
+  pool: Bytes!
+  token0: Helper_Token!
+  token1: Helper_Token!
+  liquidityProviderCount: BigInt! # used to detect new exchanges
+  deposits: [Helper_GaugeDeposit!]! @derivedFrom(field: "gauge")
+  withdrawals: [Helper_GaugeWithdraw!]! @derivedFrom(field: "gauge")
+  liquidityPositions: [Helper_LiquidityPosition!]! @derivedFrom(field: "gauge")
+  liquidityPositionSnapshots: [Helper_LiquidityPositionSnapshot!]! @derivedFrom(field: "gauge")
+  harvests: [Helper_Harvest!]! @derivedFrom(field: "gauge")
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_GaugeDeposit {
+  id: ID!
+  gauge: Helper_Gauge! # entity
+  user: Bytes! # address
+  pool: Bytes # address
+  amount: BigInt! @config(precision: 78)
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_GaugeWithdraw {
+  id: ID!
+  gauge: Helper_Gauge! # entity
+  user: Bytes! # address
+  pool: Bytes # address
+  amount: BigInt! @config(precision: 78)
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_User {
+  id: ID!
+  liquidityPositions: [Helper_LiquidityPosition!]! @derivedFrom(field: "user")
+  depositTokenBalance: [Helper_DepositTokenBalance!]! @derivedFrom(field: "user")
+  harvests: [Helper_Harvest!]! @derivedFrom(field: "receiver")
+  shareSecondsTotal: BigDecimal @config(precision: 100, scale: 60)
+  amountSecondsTotal: BigDecimal @config(precision: 100, scale: 60)
+  pointsUpdatedAt: BigInt
+}
+
+type Helper_LiquidityPosition {
+  id: ID!
+  user: Helper_User!
+  gauge: Helper_Gauge! @index
+  amount: BigInt! @config(precision: 78)
+  userShare: BigDecimal! @config(precision: 100, scale: 60) # snapshot of users share of the pool
+  userToken0: BigInt! @config(precision: 78) # snapshot of users token0 balance
+  userToken1: BigInt! @config(precision: 78) # snapshot of users token1 balance
+  userToken0Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  userToken1Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  reserve0: BigInt! @config(precision: 78) # snapshot of pair token0 reserves
+  reserve1: BigInt! @config(precision: 78) # snapshot of pair token1 reserves
+  liquidityTokenTotalSupply: BigInt! @config(precision: 78) # snapshot of pool token supply
+  shareSecondsTotal: BigDecimal @config(precision: 100, scale: 60)
+  amountSecondsTotal: BigDecimal @config(precision: 100, scale: 60)
+  lastAccruedAt: BigInt
+}
+
+type Helper_DepositTokenBalance {
+  id: ID!
+  user: Helper_User!
+  token: Helper_Token!
+  amount: BigInt! @config(precision: 78)
+  amountDecimals: BigDecimal! @config(precision: 100, scale: 60)
+}
+
+type Helper_LiquidityPositionSnapshot {
+  id: ID!
+  liquidityPosition: Helper_LiquidityPosition!
+  gauge: Helper_Gauge! # reference to gauge
+  user: Helper_User! # reference to user
+  amount: BigInt! @config(precision: 78) # snapshot of users pool token balance
+  userShare: BigDecimal! @config(precision: 100, scale: 60) # snapshot of users share of the pool
+  userToken0: BigInt! @config(precision: 78) # snapshot of users token0 balance
+  userToken1: BigInt! @config(precision: 78) # snapshot of users token1 balance
+  userToken0Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  userToken1Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  reserve0: BigInt! @config(precision: 78) # snapshot of pair token0 reserves
+  reserve1: BigInt! @config(precision: 78) # snapshot of pair token1 reserves
+  liquidityTokenTotalSupply: BigInt! @config(precision: 78) # snapshot of pool token supply
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  deltaSeconds: BigInt
+  deltaShareSeconds: BigDecimal @config(precision: 100, scale: 60)
+  deltaAmountSeconds: BigDecimal @config(precision: 100, scale: 60)
+}
+
+type Helper_Exercise {
+  id: ID!
+  sender: Bytes!
+  recipient: Bytes!
+  amount: BigInt! @config(precision: 78)
+  paymentAmount: BigInt! @config(precision: 78)
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_ExerciseVe {
+  id: ID!
+  sender: Bytes!
+  recipient: Bytes!
+  amount: BigInt! @config(precision: 78)
+  paymentAmount: BigInt! @config(precision: 78)
+  nftId: BigInt! @config(precision: 78)
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_PreMining {
+  id: ID! # `${preminingAddress}-${pid}`
+  premining: Bytes! # contract address
+  pool: Bytes! # LP token address
+  pid: BigInt! @config(precision: 78)
+  token0: Helper_Token!
+  token1: Helper_Token!
+  liquidityProviderCount: BigInt!
+  deposits: [Helper_PreMiningDeposit!]! @derivedFrom(field: "premining")
+  withdrawals: [Helper_PreMiningWithdraw!]! @derivedFrom(field: "premining")
+  liquidityPositions: [Helper_PreMiningLiquidityPosition!]! @derivedFrom(field: "premining")
+  liquidityPositionSnapshots: [Helper_PreMiningLiquidityPositionSnapshot!]!
+    @derivedFrom(field: "premining")
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_PreMiningDeposit {
+  id: ID!
+  premining: Helper_PreMining!
+  user: Bytes! # address
+  pid: BigInt! @config(precision: 78) # pool id
+  pool: Bytes # address
+  amount: BigInt! @config(precision: 78)
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_PreMiningWithdraw {
+  id: ID!
+  premining: Helper_PreMining!
+  user: Bytes! # address
+  pid: BigInt! @config(precision: 78) # pool id
+  pool: Bytes # address
+  amount: BigInt! @config(precision: 78)
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_PreMiningUser {
+  id: ID!
+  liquidityPositions: [Helper_PreMiningLiquidityPosition!]! @derivedFrom(field: "user")
+  depositTokenBalance: [Helper_PreMiningDepositTokenBalance!]! @derivedFrom(field: "user")
+}
+
+type Helper_PreMiningLiquidityPosition {
+  id: ID! # `${preminingAddress}-${pid}-${user}`
+  user: Helper_PreMiningUser!
+  premining: Helper_PreMining!
+  amount: BigInt! @config(precision: 78)
+  userShare: BigDecimal! @config(precision: 100, scale: 60)
+  userToken0: BigInt! @config(precision: 78)
+  userToken1: BigInt! @config(precision: 78)
+  userToken0Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  userToken1Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  reserve0: BigInt! @config(precision: 78)
+  reserve1: BigInt! @config(precision: 78)
+  liquidityTokenTotalSupply: BigInt! @config(precision: 78)
+}
+
+type Helper_PreMiningDepositTokenBalance {
+  id: ID! # `${token}-${user}`
+  user: Helper_PreMiningUser!
+  token: Helper_Token!
+  amount: BigInt! @config(precision: 78)
+  amountDecimals: BigDecimal! @config(precision: 100, scale: 60)
+}
+
+type Helper_PreMiningLiquidityPositionSnapshot {
+  id: ID! # `${position.id}${blockTimestamp}` — no separator, as upstream
+  liquidityPosition: Helper_PreMiningLiquidityPosition!
+  premining: Helper_PreMining!
+  user: Helper_PreMiningUser!
+  amount: BigInt! @config(precision: 78)
+  userShare: BigDecimal! @config(precision: 100, scale: 60)
+  userToken0: BigInt! @config(precision: 78)
+  userToken1: BigInt! @config(precision: 78)
+  userToken0Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  userToken1Decimals: BigDecimal! @config(precision: 100, scale: 60)
+  reserve0: BigInt! @config(precision: 78)
+  reserve1: BigInt! @config(precision: 78)
+  liquidityTokenTotalSupply: BigInt! @config(precision: 78)
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+}
+
+type Helper_Block {
+  id: ID!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+}
+
+type Helper_GaugeState {
+  id: ID!
+  gauges: [Helper_Gauge!]! @derivedFrom(field: "state")
+}
+
+type Helper_Harvest {
+  id: ID!
+  receiver: Helper_User!
+  gauge: Helper_Gauge!
+  tokenAddress: Bytes!
+  rewardAmount: BigInt! @config(precision: 78)
+  rewardAmountDecimals: BigDecimal! @config(precision: 100, scale: 60)
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Helper_VeToken {
+  id: ID! # ve contract address
+  tokenAddress: Bytes!
+  name: String!
+  symbol: String!
+  decimals: BigInt!
+  totalSupply: BigInt! @config(precision: 78)
+  totalLocked: BigInt! @config(precision: 78)
+  locks: [Helper_VeLock!]! @derivedFrom(field: "veToken")
+  snapshots: [Helper_VeTokenSnapshot!]! @derivedFrom(field: "veToken")
+}
+
+type Helper_VeUser {
+  id: ID!
+  totalLocked: BigInt! @config(precision: 78)
+  totalVotingPower: BigInt! @config(precision: 78)
+  lockCount: BigInt!
+  locks: [Helper_VeLock!]! @derivedFrom(field: "user")
+  deltas: [Helper_VeUserLockDelta!]! @derivedFrom(field: "user")
+}
+
+type Helper_VeLock {
+  id: ID!
+  veToken: Helper_VeToken!
+  user: Helper_VeUser!
+  owner: Bytes!
+  value: BigInt! @config(precision: 78)
+  startTime: BigInt!
+  endTime: BigInt!
+  isPermanent: Boolean!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  burned: Boolean!
+}
+
+type Helper_VeUserLockDelta {
+  id: ID!
+  user: Helper_VeUser!
+  tokenId: BigInt! @config(precision: 78)
+  delta: BigInt! @config(precision: 78)
+  reason: String!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Helper_VeTokenSnapshot {
+  id: ID! # `${veToken.id}-${blockTimestamp}`
+  veToken: Helper_VeToken!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  totalSupply: BigInt! @config(precision: 78)
+  totalLocked: BigInt! @config(precision: 78)
+}
+
+type V1_PairCreated {
+  id: ID!
+  token0: String!
+  token1: String!
+  stable: Boolean!
+  pair: String!
+  param4: BigInt! @config(precision: 78) # uint256 — needs >76 digits
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: String!
+}
+
+type V1_Factory {
+  id: ID!
+
+  pairCount: Int!
+
+  totalVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  totalVolumeETH: BigDecimal! @config(precision: 130, scale: 80)
+
+  untrackedVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  totalLiquidityUSD: BigDecimal! @config(precision: 130, scale: 80)
+  totalLiquidityETH: BigDecimal! @config(precision: 130, scale: 80)
+
+  txCount: BigInt!
+}
+
+type V1_Token {
+  id: ID!
+
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+
+  totalSupply: BigInt! @config(precision: 78) # uint256
+
+  tradeVolume: BigDecimal! @config(precision: 130, scale: 80)
+  tradeVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  txCount: BigInt!
+
+  totalLiquidity: BigDecimal! @config(precision: 130, scale: 80)
+
+  derivedETH: BigDecimal @config(precision: 130, scale: 80)
+
+  tokenDayData: [V1_TokenDayData!]! @derivedFrom(field: "token")
+  pairDayDataBase: [V1_PairDayData!]! @derivedFrom(field: "token0")
+  pairDayDataQuote: [V1_PairDayData!]! @derivedFrom(field: "token1")
+  pairBase: [V1_Pair!]! @derivedFrom(field: "token0")
+  pairQuote: [V1_Pair!]! @derivedFrom(field: "token1")
+}
+
+type V1_Pair {
+  id: ID!
+
+  token0: V1_Token!
+  token1: V1_Token!
+  reserve0: BigDecimal! @config(precision: 130, scale: 80)
+  reserve1: BigDecimal! @config(precision: 130, scale: 80)
+  totalSupply: BigDecimal! @config(precision: 130, scale: 80)
+  isStable: Boolean!
+
+  reserveETH: BigDecimal! @config(precision: 130, scale: 80)
+  reserveUSD: BigDecimal! @config(precision: 130, scale: 80)
+  trackedReserveETH: BigDecimal! @config(precision: 130, scale: 80)
+
+  token0Price: BigDecimal! @config(precision: 130, scale: 80)
+  token1Price: BigDecimal! @config(precision: 130, scale: 80)
+
+  volumeToken0: BigDecimal! @config(precision: 130, scale: 80)
+  volumeToken1: BigDecimal! @config(precision: 130, scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  txCount: BigInt!
+
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+
+  liquidityProviderCount: BigInt! # used to detect new exchanges
+  pairHourData: [V1_PairHourData!]! @derivedFrom(field: "pair")
+  liquidityPositions: [V1_LiquidityPosition!]! @derivedFrom(field: "pair")
+  liquidityPositionSnapshots: [V1_LiquidityPositionSnapshot!]! @derivedFrom(field: "pair")
+  mints: [V1_Mint!]! @derivedFrom(field: "pair")
+  burns: [V1_Burn!]! @derivedFrom(field: "pair")
+  swaps: [V1_Swap!]! @derivedFrom(field: "pair")
+}
+
+type V1_User {
+  id: ID!
+  liquidityPositions: [V1_LiquidityPosition!]! @derivedFrom(field: "user")
+  usdSwapped: BigDecimal! @config(precision: 130, scale: 80)
+}
+
+type V1_LiquidityPosition {
+  id: ID!
+  user: V1_User!
+  pair: V1_Pair!
+  liquidityTokenBalance: BigDecimal! @config(precision: 130, scale: 80)
+}
+
+type V1_LiquidityPositionSnapshot {
+  id: ID!
+  liquidityPosition: V1_LiquidityPosition!
+  timestamp: Int! # saved for fast historical lookups
+  block: Int! # saved for fast historical lookups
+  user: V1_User! # reference to user
+  pair: V1_Pair! # reference to pair
+  token0PriceUSD: BigDecimal! @config(precision: 130, scale: 80) # snapshot of token0 price
+  token1PriceUSD: BigDecimal! @config(precision: 130, scale: 80) # snapshot of token1 price
+  reserve0: BigDecimal! @config(precision: 130, scale: 80) # snapshot of pair token0 reserves
+  reserve1: BigDecimal! @config(precision: 130, scale: 80) # snapshot of pair token1 reserves
+  reserveUSD: BigDecimal! @config(precision: 130, scale: 80) # snapshot of pair reserves in USD
+  liquidityTokenTotalSupply: BigDecimal! @config(precision: 130, scale: 80) # snapshot of pool token supply
+  liquidityTokenBalance: BigDecimal! @config(precision: 130, scale: 80) # snapshot of users pool token balance
+}
+
+type V1_Transaction {
+  id: ID!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  mints: [String!]!
+  burns: [String!]!
+  swaps: [String!]!
+}
+
+type V1_Mint {
+  id: ID!
+  transaction: V1_Transaction!
+  timestamp: BigInt! # need this to pull recent txns for specific token or pair
+  pair: V1_Pair!
+
+  to: String!
+  liquidity: BigDecimal! @config(precision: 130, scale: 80)
+
+  sender: String
+  amount0: BigDecimal @config(precision: 130, scale: 80)
+  amount1: BigDecimal @config(precision: 130, scale: 80)
+  logIndex: BigInt
+  amountUSD: BigDecimal @config(precision: 130, scale: 80)
+
+  feeTo: String
+  feeLiquidity: BigDecimal @config(precision: 130, scale: 80)
+}
+
+type V1_Burn {
+  id: ID!
+  transaction: V1_Transaction!
+  timestamp: BigInt! # need this to pull recent txns for specific token or pair
+  pair: V1_Pair!
+
+  liquidity: BigDecimal! @config(precision: 130, scale: 80)
+
+  sender: String
+  amount0: BigDecimal @config(precision: 130, scale: 80)
+  amount1: BigDecimal @config(precision: 130, scale: 80)
+  to: String
+  logIndex: BigInt
+  amountUSD: BigDecimal @config(precision: 130, scale: 80)
+
+  needsComplete: Boolean!
+
+  feeTo: String
+  feeLiquidity: BigDecimal @config(precision: 130, scale: 80)
+}
+
+type V1_Swap {
+  id: ID!
+  transaction: V1_Transaction!
+  timestamp: BigInt! # need this to pull recent txns for specific token or pair
+  pair: V1_Pair!
+
+  sender: String!
+  from: String!
+  amount0In: BigDecimal! @config(precision: 130, scale: 80)
+  amount1In: BigDecimal! @config(precision: 130, scale: 80)
+  amount0Out: BigDecimal! @config(precision: 130, scale: 80)
+  amount1Out: BigDecimal! @config(precision: 130, scale: 80)
+  to: String!
+  logIndex: BigInt
+
+  amountUSD: BigDecimal! @config(precision: 130, scale: 80)
+}
+
+type V1_Bundle {
+  id: ID!
+  ethPrice: BigDecimal! @config(precision: 130, scale: 80) # price of ETH usd
+}
+
+type V1_DayData {
+  id: ID!
+  date: Int!
+
+  dailyVolumeETH: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeUntracked: BigDecimal! @config(precision: 130, scale: 80)
+
+  totalVolumeETH: BigDecimal! @config(precision: 130, scale: 80)
+  totalLiquidityETH: BigDecimal! @config(precision: 130, scale: 80)
+  totalVolumeUSD: BigDecimal! @config(precision: 130, scale: 80) # Accumulate at each trade, not just calculated off whatever totalVolume is. making it more accurate as it is a live conversion
+  totalLiquidityUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  txCount: BigInt!
+}
+
+type V1_PairHourData {
+  id: ID!
+  hourStartUnix: Int! # unix timestamp for start of hour
+  pair: V1_Pair!
+
+  reserve0: BigDecimal! @config(precision: 130, scale: 80)
+  reserve1: BigDecimal! @config(precision: 130, scale: 80)
+
+  totalSupply: BigDecimal! @config(precision: 130, scale: 80)
+
+  reserveUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  hourlyVolumeToken0: BigDecimal! @config(precision: 130, scale: 80)
+  hourlyVolumeToken1: BigDecimal! @config(precision: 130, scale: 80)
+  hourlyVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  hourlyTxns: BigInt!
+}
+
+type V1_PairDayData {
+  id: ID!
+  date: Int!
+  pairAddress: String!
+  token0: V1_Token!
+  token1: V1_Token!
+
+  reserve0: BigDecimal! @config(precision: 130, scale: 80)
+  reserve1: BigDecimal! @config(precision: 130, scale: 80)
+
+  totalSupply: BigDecimal! @config(precision: 130, scale: 80)
+
+  reserveUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  dailyVolumeToken0: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeToken1: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  dailyTxns: BigInt!
+}
+
+type V1_TokenDayData {
+  id: ID!
+  date: Int!
+  token: V1_Token!
+
+  dailyVolumeToken: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeETH: BigDecimal! @config(precision: 130, scale: 80)
+  dailyVolumeUSD: BigDecimal! @config(precision: 130, scale: 80)
+  dailyTxns: BigInt!
+
+  totalLiquidityToken: BigDecimal! @config(precision: 130, scale: 80)
+  totalLiquidityETH: BigDecimal! @config(precision: 130, scale: 80)
+  totalLiquidityUSD: BigDecimal! @config(precision: 130, scale: 80)
+
+  priceUSD: BigDecimal! @config(precision: 130, scale: 80)
+}
+
+type V1_PairLookup {
+  id: ID!
+  pair: String!
+}
+
+type V4_PoolManager {
+  id: ID! # poolManagerAddress from chains.ts
+  poolCount: BigInt!
+  txCount: BigInt!
+  totalVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalVolumeNative: BigDecimal! @config(precision: 160 scale: 80)
+  totalFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalFeesNative: BigDecimal! @config(precision: 160 scale: 80)
+  totalProtocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalProtocolFeesNative: BigDecimal! @config(precision: 160 scale: 80)
+  totalLpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalLpFeesNative: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedNative: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSDUntracked: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedNativeUntracked: BigDecimal! @config(precision: 160 scale: 80)
+  owner: String! # B-4: set to the zero address once, never updated
+}
+
+type V4_Bundle {
+  id: ID!
+  nativePriceUSD: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_Token {
+  id: ID!
+  symbol: String!
+  name: String!
+  decimals: BigInt!
+  totalSupply: BigInt! @config(precision: 80) # uint256
+  volume: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  txCount: BigInt!
+  poolCount: BigInt!
+  totalValueLocked: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSDUntracked: BigDecimal! @config(precision: 160 scale: 80)
+  derivedNative: BigDecimal! @config(precision: 160 scale: 80)
+  derivedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  whitelistPools: [String!]! # D-4: plain array of Pool ids, not @derivedFrom
+  tokenHourData: [V4_TokenHourData!]! @derivedFrom(field: "token")
+  tokenDayData: [V4_TokenDayData!]! @derivedFrom(field: "token")
+}
+
+type V4_Pool {
+  id: ID!
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+  token0: V4_Token!
+  token1: V4_Token!
+  dynamicLPFee: Boolean!
+  feeTier: BigInt!
+  swapFee: BigInt!
+  protocolFee: BigInt!
+  lpFee: BigInt!
+  liquidity: BigInt! @config(precision: 80)
+  sqrtPrice: BigInt!
+  token0Price: BigDecimal! @config(precision: 160 scale: 80)
+  token1Price: BigDecimal! @config(precision: 160 scale: 80)
+  tick: BigInt
+  tickSpacing: BigInt!
+  observationIndex: BigInt!
+  hooksRegistration: String! # D-2: was Bytes!
+  parameters: String! # D-2: was Bytes!
+  volumeToken0: BigDecimal! @config(precision: 160 scale: 80)
+  volumeToken1: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  txCount: BigInt!
+  collectedFeesToken0: BigDecimal! @config(precision: 160 scale: 80)
+  collectedFeesToken1: BigDecimal! @config(precision: 160 scale: 80)
+  collectedFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedToken0: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedToken1: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedNative: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSDUntracked: BigDecimal! @config(precision: 160 scale: 80)
+  liquidityProviderCount: BigInt!
+  poolHourData: [V4_PoolHourData!]! @derivedFrom(field: "pool")
+  poolDayData: [V4_PoolDayData!]! @derivedFrom(field: "pool")
+  hooks: String!
+  modifyLiquiditys: [V4_ModifyLiquidity!]! @derivedFrom(field: "pool")
+  swaps: [V4_Swap!]! @derivedFrom(field: "pool")
+  ticks: [V4_Tick!]! @derivedFrom(field: "pool")
+}
+
+type V4_Tick {
+  id: ID!
+  poolAddress: String
+  tickIdx: BigInt!
+  pool: V4_Pool!
+  liquidityGross: BigInt! @config(precision: 80)
+  liquidityNet: BigInt! @config(precision: 80)
+  price0: BigDecimal! @config(precision: 160 scale: 80)
+  price1: BigDecimal! @config(precision: 160 scale: 80)
+  createdAtTimestamp: BigInt!
+  createdAtBlockNumber: BigInt!
+}
+
+type V4_Transaction {
+  id: ID!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  gasUsed: BigInt! # always 0 — see utils/entities.ts
+  gasPrice: BigInt!
+  modifyLiquiditys: [V4_ModifyLiquidity!]! @derivedFrom(field: "transaction") # D-3
+  swaps: [V4_Swap!]! @derivedFrom(field: "transaction") # D-3
+  transfers: [V4_Transfer!]! @derivedFrom(field: "transaction") # D-3
+  subscriptions: [V4_Subscribe!]! @derivedFrom(field: "transaction") # D-3
+  unsubscriptions: [V4_Unsubscribe!]! @derivedFrom(field: "transaction") # D-3
+}
+
+type V4_Swap {
+  id: ID!
+  transaction: V4_Transaction!
+  timestamp: BigInt!
+  pool: V4_Pool!
+  token0: V4_Token!
+  token1: V4_Token!
+  sender: String! # D-2: was Bytes!
+  origin: String! # D-2: was Bytes! — the EOA that initiated the txn
+  amount0Raw: BigInt! @config(precision: 80)
+  amount1Raw: BigInt! @config(precision: 80)
+  amount0: BigDecimal! @config(precision: 160 scale: 80)
+  amount1: BigDecimal! @config(precision: 160 scale: 80)
+  amountUSD: BigDecimal! @config(precision: 160 scale: 80)
+  swapFee: BigInt!
+  protocolFee: BigInt!
+  lpFee: BigInt!
+  sqrtPriceX96: BigInt!
+  tick: BigInt!
+  logIndex: BigInt
+}
+
+type V4_ModifyLiquidity {
+  id: ID!
+  transaction: V4_Transaction!
+  timestamp: BigInt!
+  pool: V4_Pool!
+  token0: V4_Token!
+  token1: V4_Token!
+  sender: String # D-2: was Bytes (nullable)
+  origin: String! # D-2: was Bytes!
+  amount: BigInt! @config(precision: 80) # int256 liquidityDelta
+  amount0: BigDecimal! @config(precision: 160 scale: 80)
+  amount1: BigDecimal! @config(precision: 160 scale: 80)
+  amountUSD: BigDecimal @config(precision: 160 scale: 80)
+  tickLower: BigInt!
+  tickUpper: BigInt!
+  salt: String! # D-2: was Bytes!
+  logIndex: BigInt
+  transactionLogIndex: BigInt
+}
+
+type V4_ModifyLiquidityCache {
+  id: ID!
+  hash: String! # D-2: was Bytes!
+  logIndex: BigInt!
+  modifyLiquidities: [String!]! # D-4: plain array of ModifyLiquidity ids
+}
+
+type V4_ProtocolDayData {
+  id: ID!
+  date: Int!
+  volumeNative: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSDUntracked: BigDecimal! @config(precision: 160 scale: 80) # B-3: initialised then never updated
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  txCount: BigInt!
+  tvlUSD: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_PoolDayData {
+  id: ID!
+  date: Int!
+  pool: V4_Pool!
+  liquidity: BigInt! @config(precision: 80)
+  sqrtPrice: BigInt!
+  token0Price: BigDecimal! @config(precision: 160 scale: 80)
+  token1Price: BigDecimal! @config(precision: 160 scale: 80)
+  tick: BigInt
+  tvlUSD: BigDecimal! @config(precision: 160 scale: 80)
+  volumeToken0: BigDecimal! @config(precision: 160 scale: 80)
+  volumeToken1: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  txCount: BigInt!
+  open: BigDecimal! @config(precision: 160 scale: 80)
+  high: BigDecimal! @config(precision: 160 scale: 80)
+  low: BigDecimal! @config(precision: 160 scale: 80)
+  close: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_PoolHourData {
+  id: ID!
+  periodStartUnix: Int!
+  pool: V4_Pool!
+  liquidity: BigInt! @config(precision: 80)
+  sqrtPrice: BigInt!
+  token0Price: BigDecimal! @config(precision: 160 scale: 80)
+  token1Price: BigDecimal! @config(precision: 160 scale: 80)
+  tick: BigInt
+  tvlUSD: BigDecimal! @config(precision: 160 scale: 80)
+  volumeToken0: BigDecimal! @config(precision: 160 scale: 80)
+  volumeToken1: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  txCount: BigInt!
+  open: BigDecimal! @config(precision: 160 scale: 80)
+  high: BigDecimal! @config(precision: 160 scale: 80)
+  low: BigDecimal! @config(precision: 160 scale: 80)
+  close: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_TokenDayData {
+  id: ID!
+  date: Int!
+  token: V4_Token!
+  txCount: BigInt!
+  volume: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80) # accumulates the TRACKED value — deliberate
+  totalValueLocked: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  priceUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  open: BigDecimal! @config(precision: 160 scale: 80)
+  high: BigDecimal! @config(precision: 160 scale: 80)
+  low: BigDecimal! @config(precision: 160 scale: 80)
+  close: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_TokenHourData {
+  id: ID!
+  periodStartUnix: Int!
+  token: V4_Token!
+  txCount: BigInt!
+  volume: BigDecimal! @config(precision: 160 scale: 80)
+  volumeUSD: BigDecimal! @config(precision: 160 scale: 80)
+  untrackedVolumeUSD: BigDecimal! @config(precision: 160 scale: 80) # accumulates the TRACKED value — deliberate
+  totalValueLocked: BigDecimal! @config(precision: 160 scale: 80)
+  totalValueLockedUSD: BigDecimal! @config(precision: 160 scale: 80)
+  priceUSD: BigDecimal! @config(precision: 160 scale: 80)
+  feesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  protocolFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  lpFeesUSD: BigDecimal! @config(precision: 160 scale: 80)
+  open: BigDecimal! @config(precision: 160 scale: 80)
+  high: BigDecimal! @config(precision: 160 scale: 80)
+  low: BigDecimal! @config(precision: 160 scale: 80)
+  close: BigDecimal! @config(precision: 160 scale: 80)
+}
+
+type V4_Position {
+  id: ID!
+  tokenId: BigInt!
+  owner: String!
+  origin: String!
+  pool: V4_Pool! # may reference a non-existent Pool when positions() reverts
+  tickLower: BigInt!
+  tickUpper: BigInt!
+  liquidity: BigInt! @config(precision: 80)
+  token0Balance: BigDecimal! @config(precision: 160 scale: 80)
+  token1Balance: BigDecimal! @config(precision: 160 scale: 80)
+  depositedToken0: BigDecimal @config(precision: 160 scale: 80)
+  depositedToken1: BigDecimal @config(precision: 160 scale: 80)
+  withdrawnToken0: BigDecimal @config(precision: 160 scale: 80)
+  withdrawnToken1: BigDecimal @config(precision: 160 scale: 80)
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+  subscriptions: [V4_Subscribe!]! @derivedFrom(field: "position")
+  unsubscriptions: [V4_Unsubscribe!]! @derivedFrom(field: "position")
+  transfers: [V4_Transfer!]! @derivedFrom(field: "position")
+}
+
+type V4_Subscribe {
+  id: ID!
+  tokenId: BigInt!
+  address: String!
+  transaction: V4_Transaction!
+  logIndex: BigInt!
+  timestamp: BigInt!
+  origin: String!
+  position: V4_Position!
+}
+
+type V4_Unsubscribe {
+  id: ID!
+  tokenId: BigInt!
+  address: String!
+  transaction: V4_Transaction!
+  logIndex: BigInt!
+  timestamp: BigInt!
+  origin: String!
+  position: V4_Position!
+}
+
+type V4_Transfer {
+  id: ID!
+  tokenId: BigInt!
+  from: String!
+  to: String!
+  transaction: V4_Transaction!
+  logIndex: BigInt!
+  timestamp: BigInt!
+  origin: String!
+  position: V4_Position!
+}

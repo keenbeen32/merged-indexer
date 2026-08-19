@@ -1,0 +1,323 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: pumex-merged-envio
+description: >-
+  Merged Envio indexer covering five previously-separate Pumex indexers:
+  algebra-farming, cl-analytics, helper, v1 and v4. The algebra indexer
+  (pumex-algebra-envio) is deliberately NOT merged and stays standalone.
+
+  Entity types are prefixed per source indexer — Farm_, Analytics_, Helper_,
+  V1_, V4_ — so all five schemas coexist in one database and one GraphQL
+  endpoint. See schema.graphql for the same sectioning.
+
+# Every address-keyed entity ID is built from lowercase hex; `checksum` (the
+# Envio default) would change all of them.
+address_format: lowercase
+
+# `gas` is declared PER-EVENT below, never here: Envio rejects it for any chain
+# that syncs over RPC, and chain 1439 does.
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - gasPrice
+    - transactionIndex
+
+contracts:
+  - name: NonfungiblePositionManager
+    abi_file_path: ./abis/analytics/NonfungiblePositionManager.json
+    handler: ./src/nfpm.ts
+    events:
+      - event: Collect(uint256 indexed tokenId, address recipient, uint256 amount0, uint256 amount1)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidityDesired, uint128 actualLiquidity, uint256 amount0, uint256 amount1, address pool)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+
+  - name: EternalFarming
+    abi_file_path: ./abis/farm/EternalFarming.json
+    handler: ./src/farm/handlers/EternalFarming.ts
+    events:
+      - event: EternalFarmingCreated(address indexed rewardToken, address indexed bonusRewardToken, address indexed pool, address virtualPool, uint256 nonce, uint256 reward, uint256 bonusReward, uint24 minimalAllowedPositionWidth)
+      - event: FarmEntered(uint256 indexed tokenId, bytes32 indexed incentiveId, uint128 liquidity)
+      - event: FarmEnded(uint256 indexed tokenId, bytes32 indexed incentiveId, address indexed rewardAddress, address bonusRewardToken, address owner, uint256 reward, uint256 bonusReward)
+      - event: RewardClaimed(address indexed to, uint256 reward, address indexed rewardAddress, address indexed owner)
+      - event: IncentiveDeactivated(bytes32 indexed incentiveId)
+      - event: RewardsRatesChanged(uint128 rewardRate, uint128 bonusRewardRate, bytes32 incentiveId)
+      - event: RewardsAdded(uint256 rewardAmount, uint256 bonusRewardAmount, bytes32 incentiveId)
+      - event: RewardAmountsDecreased(uint256 rewardAmount, uint256 bonusRewardAmount, bytes32 incentiveId)
+      - event: RewardsCollected(uint256 tokenId, bytes32 incentiveId, uint256 rewardAmount, uint256 bonusRewardAmount)
+
+  - name: Analytics_Factory
+    abi_file_path: ./abis/analytics/factory.json
+    handler: ./src/analytics/handlers/Factory.ts
+    events:
+      - event: Pool(address indexed token0, address indexed token1, address pool)
+        name: PoolCreated # `Pool` would collide with the Analytics_Pool contract name
+      - event: CustomPool(address indexed deployer, address indexed token0, address indexed token1, address pool)
+      - event: DefaultCommunityFee(uint16 newDefaultCommunityFee)
+
+  - name: Analytics_Pool
+    abi_file_path: ./abis/analytics/pool.json
+    handler: ./src/analytics/handlers/Pool.ts
+    events:
+      - event: Initialize(uint160 price, int24 tick)
+      - event: Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 price, uint128 liquidity, int24 tick)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: SwapFee(address indexed sender, uint24 overrideFee, uint24 pluginFee)
+      - event: Mint(address sender, address indexed owner, int24 indexed bottomTick, int24 indexed topTick, uint128 liquidityAmount, uint256 amount0, uint256 amount1)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: Burn(address indexed owner, int24 indexed bottomTick, int24 indexed topTick, uint128 liquidityAmount, uint256 amount0, uint256 amount1)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: BurnFee(address indexed owner, uint24 pluginFee)
+      - event: Fee(uint16 fee)
+      - event: Collect(address indexed owner, address recipient, int24 indexed bottomTick, int24 indexed topTick, uint128 amount0, uint128 amount1)
+        field_selection:
+          transaction_fields: [hash, from, gasPrice, transactionIndex, gas]
+      - event: CommunityFee(uint16 communityFeeNew)
+      - event: TickSpacing(int24 newTickSpacing)
+      - event: Plugin(address newPluginAddress)
+      - event: PluginConfig(uint8 newPluginConfig)
+
+  - name: VoterV5
+    abi_file_path: ./abis/helper/VoterV5.json
+    handler: ./src/helper/handlers/VoterV5.ts
+    events:
+      - event: GaugeCreated(address indexed gauge, address creator, address internal_bribe, address indexed external_bribe, address indexed pool)
+
+  - name: Options
+    abi_file_path: ./abis/helper/oToken.json
+    handler: ./src/helper/handlers/Options.ts
+    events:
+      - event: Exercise(address indexed sender, address indexed recipient, uint256 amount, uint256 paymentAmount)
+      - event: ExerciseVe(address indexed sender, address indexed recipient, uint256 amount, uint256 paymentAmount, uint256 nftId)
+
+  - name: GaugeV2
+    abi_file_path: ./abis/helper/GaugeV2.json
+    handler: ./src/helper/handlers/GaugeV2.ts
+    events:
+      - event: Deposit(address indexed user, uint256 amount)
+      - event: Withdraw(address indexed user, uint256 amount)
+      - event: Harvest(address indexed user, uint256 reward)
+
+  - name: PreMining
+    abi_file_path: ./abis/helper/PreMining.json
+    handler: ./src/helper/handlers/PreMining.ts
+    events:
+      - event: LogPoolAddition(uint256 indexed pid, uint256 allocPoint, address indexed stakeToken, uint16 depositFee)
+      - event: Deposit(address indexed user, uint256 indexed pid, uint256 amount)
+      - event: Withdraw(address indexed user, uint256 indexed pid, uint256 amount)
+      - event: EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount)
+
+  - name: VeToken
+    abi_file_path: ./abis/helper/veToken.json
+    handler: ./src/helper/handlers/VeToken.ts
+    events:
+      - event: LockCreated(uint256 indexed tokenId, address indexed to, uint256 value, uint256 unlockTime, bool isPermanent)
+      - event: LockAmountIncreased(uint256 indexed tokenId, uint256 value)
+      - event: LockDurationExtended(uint256 indexed tokenId, uint256 newUnlockTime, bool isPermanent)
+      - event: LockUpdated(uint256 indexed tokenId, uint256 value, uint256 unlockTime, bool isPermanent)
+      - event: LockMerged(uint256 indexed fromTokenId, uint256 indexed toTokenId, uint256 totalValue, uint256 unlockTime, bool isPermanent)
+      - event: LockSplit(uint256[] splitWeights, uint256 indexed _tokenId)
+      - event: Transfer(address indexed from, address indexed to, uint256 indexed tokenId)
+      - event: SupplyUpdated(uint256 oldSupply, uint256 newSupply)
+      - event: PayoutClaimed(uint256 indexed tokenId, address indexed recipient, uint256 claimAmount)
+      - event: UnlockPermanent(uint256 indexed tokenId, address indexed sender, uint256 unlockTime)
+
+  - name: V1_Factory
+    abi_file_path: ./abis/v1/Factory.json
+    handler: ./src/v1/factory.ts
+    events:
+      - event: PairCreated(address indexed token0, address indexed token1, bool stable, address pair, uint256 param4)
+
+  - name: V1_Pair
+    abi_file_path: ./abis/v1/Pair.json
+    handler: ./src/v1/core.ts
+    events:
+      - event: Mint(address indexed sender, uint256 amount0, uint256 amount1)
+      - event: Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to)
+      - event: Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)
+      - event: Sync(uint256 reserve0, uint256 reserve1)
+      - event: Transfer(address indexed from, address indexed to, uint256 value)
+
+  - name: PoolManager
+    abi_file_path: ./abis/v4/PoolManager.json
+    handler: ./src/v4/handlers/PoolManager.ts
+    events:
+      - event: Initialize(bytes32 indexed id, address indexed currency0, address indexed currency1, address hooks, uint24 fee, bytes32 parameters, uint160 sqrtPriceX96, int24 tick)
+      - event: ModifyLiquidity(bytes32 indexed id, address indexed sender, int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt)
+      - event: Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee, uint16 protocolFee)
+      - event: DynamicLPFeeUpdated(bytes32 indexed id, uint24 dynamicLPFee)
+      - event: ProtocolFeeUpdated(bytes32 indexed id, uint24 protocolFee)
+
+  - name: PositionManager
+    abi_file_path: ./abis/v4/PositionManager.json
+    handler: ./src/v4/handlers/PositionManager.ts
+    events:
+      - event: ModifyLiquidity(uint256 indexed tokenId, int256 liquidityChange, int256 feesAccrued)
+      - event: Subscription(uint256 indexed tokenId, address indexed subscriber)
+      - event: Unsubscription(uint256 indexed tokenId, address indexed subscriber)
+      - event: Transfer(address indexed from, address indexed to, uint256 indexed id)
+
+chains:
+  # Kept on HyperSync: over RPC, TAC does not reliably return transaction
+  # fields beyond `hash`. See the chain notes in the README.
+  - id: 239
+    start_block: 3820258 # analytics; farm 4,316,157 · v1 4,265,069
+    hypersync_config:
+      url: https://239.hypersync.xyz
+    contracts:
+      - name: Analytics_Factory
+        address: "0x10253594a832f967994b44f33411940533302acb"
+        start_block: 3820258
+      - name: NonfungiblePositionManager
+        address: "0x69d57b9d705ead73a5d2f2476c30c55bd755cc2f"
+        start_block: 3820258
+      - name: Analytics_Pool
+      - name: EternalFarming
+        address: "0x50FCbF85d23aF7C91f94842FeCd83d16665d27bA"
+        start_block: 4316157
+      - name: V1_Factory
+        address: "0x2e9eB1Dd1F0462336a71dF52A6E387D207b6190f"
+        start_block: 4265069
+      - name: V1_Pair
+
+  - id: 59144
+    start_block: 2202427 # v1; helper 2,207,763
+    contracts:
+      - name: VoterV5
+        address: "0x0B2c83B6e39E32f694a86633B4d1Fe69d13b63c5"
+        start_block: 2207763
+      - name: Options
+        address: "0x63349ba5e1f71252ecd56e8f950d1a518b400b60"
+        start_block: 2207763
+      - name: GaugeV2
+      - name: V1_Factory
+        address: "0xBc7695Fd00E3b32D08124b7a4287493aEE99f9ee"
+        start_block: 2202427
+      - name: V1_Pair
+
+  - id: 9745
+    start_block: 2056011 # v1; helper 2,074,210; analytics 3,010,923
+    hypersync_config:
+      url: https://9745.hypersync.xyz
+    contracts:
+      - name: Analytics_Factory
+        address: "0x51f563c1b2885da02f0eef2367574e6bc567d151"
+        start_block: 3010923
+      - name: Analytics_Pool
+      - name: VoterV5
+        address: "0xaf66E864Eba27b1F8edc4c4c8b7074df8ac5B551"
+        start_block: 2074210
+      - name: VeToken
+        address: "0xdD9C7AAD00Fed3B49C3EbF95F1e3b75c305f5580"
+        start_block: 2074210
+      - name: Options
+        address: "0xF94451F19294dA68a40E4DD52cfaC7c8bD66B93c"
+        start_block: 2074210
+      - name: GaugeV2
+      - name: V1_Factory
+        address: "0xbf05db69176e47bf89a6b19f7492d50751d20452"
+        start_block: 2056011
+      - name: V1_Pair
+
+  - id: 1776
+    start_block: 137690039 # v1; helper/v4 141,332,762
+    contracts:
+      - name: VoterV5
+        address: "0xd552427d94ec313b980f387d6f868ebd43b1aa05"
+        start_block: 141332762
+      - name: VeToken
+        address: "0xdaedd5358398b9693a6a5770db1bd50bc4cbb654"
+        start_block: 141332762
+      - name: GaugeV2
+      - name: V1_Factory
+        address: "0x105A0A9c1D9e29e0D68B746538895c94468108d2"
+        start_block: 137690039
+      - name: V1_Pair
+      - name: PoolManager
+        address: "0xd79cb76f783c332cee7656243e136f94f43b6913"
+        start_block: 141332762
+      - name: PositionManager
+        address: "0xd43785550f9830a557c81801ddea704147edf7e3"
+        start_block: 141334571
+
+  - id: 4663
+    start_block: 1873667 # helper/v4; v1 1,873,936
+    hypersync_config:
+      url: https://4663.hypersync.xyz
+    contracts:
+      - name: VeToken
+        address: "0x18657ff9943faa5d16c6ea1bc13dd8767984c30e"
+        start_block: 1873667
+      - name: GaugeV2
+      - name: V1_Factory
+        address: "0x5c98b2d892b37c9a1D3b69472bdDc172A64CdC09"
+        start_block: 1873936
+      - name: V1_Pair
+      - name: PoolManager
+        address: "0xd01c774d4a66408326bc65728ac5ae5aaf004032"
+        start_block: 1873667
+      - name: PositionManager
+        address: "0xba2b71069824e24bb81fd3c5a1d32cc01528ee65"
+        start_block: 1873667
+
+  # Skipped only for want of an RPC endpoint. Set ENVIO_RPC_URL_1439 and
+  # delete `skip` to enable it — see the chain notes in the README.
+  - id: 1439
+    skip: true
+    start_block: 98626056
+    rpc:
+      - url: ${ENVIO_RPC_URL_1439:-https://k8s.testnet.json-rpc.injective.network}
+        for: sync
+        initial_block_interval: 5000
+        interval_ceiling: 10000
+        acceleration_additive: 1000
+        backoff_multiplicative: 0.8
+        backoff_millis: 5000
+        query_timeout_millis: 30000
+        fallback_stall_timeout: 10000
+      - url: https://injectiveevm-testnet-rpc.polkachu.com
+        for: fallback
+    contracts:
+      - name: PoolManager
+        address: "0xd79cb76f783c332cee7656243e136f94f43b6913"
+        start_block: 98626056
+      - name: PositionManager
+        address: "0xd43785550f9830a557c81801ddea704147edf7e3"
+        start_block: 98626878
+
+  # Skipped only for want of an RPC endpoint with complete log history. Set
+  # ENVIO_RPC_URL_48900 and delete `skip` to enable it — see the README.
+  - id: 48900
+    skip: true
+    start_block: 4904060 # helper; v1 4,904,075
+    hypersync_config:
+      url: https://48900.hypersync.xyz
+    rpc:
+      - url: ${ENVIO_RPC_URL_48900:-https://mainnet.zircuit.com}
+        for: fallback
+    contracts:
+      - name: VoterV5
+        address: "0x426bD5345B024a7E70CdEc62886417Ec715e78B5"
+        start_block: 4904060
+      - name: Options
+        address: "0x5B77BaA28e134444cA5cbb67e4E5691087ED28fA"
+        start_block: 4904060
+      - name: PreMining
+        address: "0x87063e4C7121f30658C82bc75f8bab5dF75760F9"
+        start_block: 4904060
+      - name: GaugeV2
+      - name: V1_Factory
+        address: "0xDd018347C29a27088eb2d0BF0637d9A05b30666c"
+        start_block: 4904075
+      - name: V1_Pair
